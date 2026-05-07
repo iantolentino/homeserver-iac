@@ -1,0 +1,102 @@
+---
+# ─── System packages ──────────────────────────────────────────────────────────
+
+- name: Install required packages
+  apt:
+    name:
+      - curl
+      - wget
+      - git
+      - htop
+      - ufw
+      - fail2ban
+      - python3-pip
+    state: present
+
+# ─── Docker ───────────────────────────────────────────────────────────────────
+
+- name: Install Docker
+  shell: curl -fsSL https://get.docker.com | sh
+  args:
+    creates: /usr/bin/docker
+
+- name: Add user to docker group
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: true
+
+- name: Install Docker Compose plugin
+  get_url:
+    url: "https://github.com/docker/compose/releases/download/v{{ docker_compose_version }}/docker-compose-linux-x86_64"
+    dest: /usr/local/bin/docker-compose
+    mode: "0755"
+
+# ─── Directory structure ──────────────────────────────────────────────────────
+
+- name: Create homeserver directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    mode: "0755"
+  loop:
+    - "{{ homeserver_base_dir }}"
+    - "{{ homeserver_base_dir }}/ollama"
+    - "{{ homeserver_base_dir }}/nginx"
+    - "{{ homeserver_base_dir }}/logs"
+
+# ─── Nginx config ─────────────────────────────────────────────────────────────
+
+- name: Deploy nginx config
+  copy:
+    dest: "{{ homeserver_base_dir }}/nginx/nginx.conf"
+    owner: "{{ ansible_user }}"
+    mode: "0644"
+    content: |
+      events { worker_connections 1024; }
+      http {
+        server {
+          listen 80;
+          location /ollama/ {
+            proxy_pass http://ollama:11434/;
+          }
+        }
+      }
+  notify: Restart nginx
+
+# ─── Firewall ─────────────────────────────────────────────────────────────────
+
+- name: Allow SSH through UFW
+  ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+
+- name: Allow HTTP through UFW
+  ufw:
+    rule: allow
+    port: "80"
+    proto: tcp
+
+- name: Enable UFW
+  ufw:
+    state: enabled
+    policy: deny
+
+# ─── Fail2ban ─────────────────────────────────────────────────────────────────
+
+- name: Enable fail2ban
+  service:
+    name: fail2ban
+    state: started
+    enabled: true
+
+# ─── Ollama (optional) ────────────────────────────────────────────────────────
+
+- name: Pull Ollama Docker image
+  community.docker.docker_image:
+    name: ollama/ollama
+    tag: latest
+    source: pull
+  when: ollama_enabled | bool

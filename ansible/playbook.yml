@@ -1,0 +1,33 @@
+---
+- name: Provision homeserver
+  hosts: homeserver
+  become: true
+
+  vars:
+    homeserver_base_dir: /opt/homeserver
+    ollama_enabled: true
+    docker_compose_version: "2.24.0"
+
+  pre_tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+  roles:
+    - homeserver
+
+  post_tasks:
+    - name: Verify Docker is running
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Print deployment summary
+      debug:
+        msg: |
+          ✅ Homeserver provisioned successfully
+          Base dir : {{ homeserver_base_dir }}
+          Ollama   : {{ ollama_enabled }}
+          Host     : {{ inventory_hostname }}
