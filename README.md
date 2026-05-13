@@ -1,6 +1,6 @@
 # homeserver-iac
 
-Infrastructure as Code for Ian's homeserver — Terraform + Ansible + GitHub Actions CI/CD. 
+Infrastructure as Code for Ian's homeserver — Terraform + Ansible + GitHub Actions CI/CD.  
 
 ## Stack
 
