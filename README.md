@@ -6,7 +6,7 @@ Infrastructure as Code for Ian's homeserver — Terraform + Ansible + GitHub Act
 
 | Tool | Purpose |
 |------|---------|
-| Terraform | Provisions Docker containers + Cloudflare DNS |
+| Terraform | Provisions Docker containers + Cloudflare DNS | 
 | Ansible | Configures the server (packages, firewall, directories) |
 | GitHub Actions | Runs both on every push to `main` |
 
