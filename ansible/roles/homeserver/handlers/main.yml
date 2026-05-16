@@ -1,6 +1,6 @@
 ---
 - name: Restart nginx
-  community.docker.docker_container: 
+  community.docker.docker_container:
     name: nginx_proxy
     state: started
     restart: true
